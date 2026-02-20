@@ -29,4 +29,7 @@ class DataChunk(BaseModel):
             }
         ]
     
+class RetrivedDocument(BaseModel):
+    text:str
+    score:float      
     
