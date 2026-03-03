@@ -29,7 +29,6 @@ async def upload_data(request:Request, project_id:int,file:UploadFile,app_settin
         )
     
     project = await  project_model.get_project_or_create_one(project_id=project_id)
-    
     data_controller = DataController()
     is_valid, result_signal =  data_controller.validate_uploaded_file(file=file)
     
@@ -39,6 +38,7 @@ async def upload_data(request:Request, project_id:int,file:UploadFile,app_settin
             content={"signal":result_signal}
         )
     project_dir_path = ProjectController().get_project_path(project_id=project_id)
+    print("project_dir_path:",project_dir_path)
     file_path, file_id= data_controller.generate_unique_filepath(orig_filename=file.filename,project_id=project_id)
     try:
         async with aiofiles.open(file_path,"wb") as f:
@@ -73,7 +73,7 @@ async def upload_data(request:Request, project_id:int,file:UploadFile,app_settin
 
 @data_router.post("/process/{project_id}")
 async def process_endpoint(request:Request, project_id:int,process_request:ProcessRequest):
-    file_id = process_request.file_id
+    # file_id = process_request.file_id
     chunk_size =process_request.chunk_size
     overlap_size = process_request.overlap_size
     do_reset = process_request.do_reset
@@ -91,8 +91,10 @@ async def process_endpoint(request:Request, project_id:int,process_request:Proce
         template_parser=request.app.template_parser
     )
     
-    project_files_ids = {}
+    
     asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+    
+    project_files_ids = {}
     if process_request.file_id:
         asset_record = await asset_model.get_asset_record(
             asset_project_id=project.project_id,
@@ -109,7 +111,7 @@ async def process_endpoint(request:Request, project_id:int,process_request:Proce
         
     else:
             
-            project_files = await asset_model.get_all_project_asset(asset_project_id=project.project_id,
+            project_files = await asset_model.get_all_project_assets(asset_project_id=project.project_id,
                                                                     asset_type=AssetTypeEnum.FILE.value)
             project_files_ids = {
                 record.asset_id:record.asset_name
@@ -150,7 +152,7 @@ async def process_endpoint(request:Request, project_id:int,process_request:Proce
         file_chunks = process_controller.process_file_content(
             file_content=file_content,
             file_id=file_id,
-            chunck_size=chunk_size,
+            chunk_size=chunk_size,
             overlap_size=overlap_size)
         
         if file_chunks is None or len(file_chunks) ==0:

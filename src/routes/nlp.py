@@ -53,13 +53,17 @@ async def index_project(request:Request,project_id:int,push_request:PushRequest)
     _=await request.app.vectordb_client.create_collection(
         collection_name=collection_name,
         embedding_size=request.app.embedding_client.embedding_size,
-        do_reset = push_request.do_rest,
+        do_reset = push_request.do_reset,
     )
+    exists = await request.app.vectordb_client.is_collection_existed(collection_name)
+    print(f"Collection {collection_name} exists? {exists}")
     # setup batching
     total_chunks_count= await chunk_model.get_total_chunks_count(project_id=project.project_id)
     pbar = tqdm(total=total_chunks_count,desc="Vector Indexing", position=0,)
+    
     while has_records:
         page_chunks= await chunk_model.get_project_chunks(project_id=project.project_id,page_no=page_no)
+        print(f"Processing page {page_no} with {len(page_chunks)} chunks")
         if len(page_chunks):
             page_no+=1
         
@@ -210,8 +214,8 @@ async def answer_index(request:Request,project_id:int,search_request:SearchReque
             content={
                 "signal":ResponseSignal.RAG_ANSWER_SUCCESS.value,
                 "answer":answer,
-                "full_prompt":full_prompt,
-                "chat_history":chat_history
+                # "full_prompt":full_prompt,
+                # "chat_history":chat_history
             }
             )
         

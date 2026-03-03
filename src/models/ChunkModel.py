@@ -9,7 +9,7 @@ class ChunkModel(BaseDataModel):
     
     def __init__(self,db_client: object):
         super().__init__(db_client=db_client)
-        self.collection= db_client
+        self.db_client= db_client
         
     @classmethod
     async def create_instance(cls,db_client: object):
@@ -48,7 +48,7 @@ class ChunkModel(BaseDataModel):
     async def delete_chunks_by_project_id(self,project_id:ObjectId):
         async with self.db_client() as session:
             stmt= delete(DataChunk).where(DataChunk.chunk_project_id==project_id)
-            result= await session.excute(stmt)
+            result= await session.execute(stmt)
             await session.commit()
         return result.rowcount
 

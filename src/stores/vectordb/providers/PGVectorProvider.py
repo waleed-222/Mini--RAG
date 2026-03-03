@@ -74,7 +74,7 @@ class PGVectorProvider(VectorDBInterface):
         async with self.db_client() as session:
               async with session.begin():
                     table_info_sql=sql_text('''
-                     SELECT schemname, tablename, tableowner, tablespace, hasindex
+                     SELECT schemaname, tablename, tableowner, tablespace, hasindexes
                      FROM pg_tables 
                      WHERE tablename = :collection_name
                      ''')
@@ -93,7 +93,7 @@ class PGVectorProvider(VectorDBInterface):
                             "name": table_info[1],
                             "owner": table_info[2],
                             "tablespace": table_info[3],
-                            "hasindex": table_info[4]
+                            "hasindexes": table_info[4]
                             },
                         "table_count":table_count.scalar_one()
                     }
@@ -110,14 +110,14 @@ class PGVectorProvider(VectorDBInterface):
         return True
     
     
-    async def create_collection(self,collection_name:str,embedding_size:int,do_rest: bool=False):
+    async def create_collection(self,collection_name:str,embedding_size:int,do_reset: bool=False):
 
-        if do_rest:
+        if do_reset:
             _=await self.delete_collection(collection_name=collection_name)
             
-        is_collection_existed = await self.is_collection_existed(collection_name)
+        is_collection_existed = await self.is_collection_existed(collection_name=collection_name)
         
-        if not self.is_collection_existed:
+        if not is_collection_existed:
             self.logger.info(f"Creating collection: {collection_name}")
             async with self.db_client() as session:
               async with session.begin():
@@ -127,7 +127,7 @@ class PGVectorProvider(VectorDBInterface):
                                             f'{PgVectorTableSchemeEnums.VECTOR.value} vector({embedding_size}),'
                                             f'{PgVectorTableSchemeEnums.METADATA.value} jsonb DEFAULT \'{{}}\','
                                             f'{PgVectorTableSchemeEnums.CHUNK_ID.value} integer,'
-                                            f'FOREIGN KEY({PgVectorTableSchemeEnums.CHUNK_ID.value}) REFERENCE chunks(chunk_id)'
+                                            f'FOREIGN KEY({PgVectorTableSchemeEnums.CHUNK_ID.value}) REFERENCES chunks(chunk_id)'
                                         ')')
                     await session.execute(create_sql)
                     await session.commit()
@@ -204,7 +204,7 @@ class PGVectorProvider(VectorDBInterface):
                     f"({PgVectorTableSchemeEnums.TEXT.value}, {PgVectorTableSchemeEnums.VECTOR.value},{PgVectorTableSchemeEnums.METADATA.value}, {PgVectorTableSchemeEnums.CHUNK_ID.value})"
                     "VALUES (:text,:vector,:metadata,:chunk_id)"
                 )
-                metadata_json= json.dump(metadata,ensure_ascii=False) if metadata is not None else "{}"
+                metadata_json= json.dumps(metadata,ensure_ascii=False) if metadata is not None else "{}"
 
                 await session.execute(insert_sql,{
                     'text':text,
@@ -246,7 +246,7 @@ class PGVectorProvider(VectorDBInterface):
                     values=[]
                     
                     for _text, _vector, _metadata, _record_id in zip(batch_text,batch_vectors,batch_metadata,batch_record_ids):
-                        metadata_json= json.dump(_metadata,ensure_ascii=False) if _metadata is not None else "{}"
+                        metadata_json= json.dumps(_metadata,ensure_ascii=False) if _metadata is not None else "{}"
                         values.append(
                             {
                                 'text':_text,
@@ -255,7 +255,7 @@ class PGVectorProvider(VectorDBInterface):
                                 'chunk_id':_record_id
                                 
                             }
-                        )
+                        )   
                     batch_insert_sql = sql_text(
                         f"INSERT INTO {collection_name}"
                     f"({PgVectorTableSchemeEnums.TEXT.value},"
@@ -281,15 +281,15 @@ class PGVectorProvider(VectorDBInterface):
         
         
         
-        vector = "["+",".join([str(v) for v in vector])+"]",
+        vector = "[" + ",".join([str(v) for v in vector])+"]"
         
         async with self.db_client() as session:
             async with session.begin():
                 search_sql = sql_text(
                     f"SELECT {PgVectorTableSchemeEnums.TEXT.value} as text, "
-                    f"(1- {PgVectorTableSchemeEnums.VECTOR.value} <=> :vector) as score"
-                    f"FROM {collection_name}"
-                    f"ORDER BY score DESC"
+                    f"1- ({PgVectorTableSchemeEnums.VECTOR.value} <=> :vector) as score "
+                    f"FROM {collection_name} "
+                    f"ORDER BY score DESC "
                     f"LIMIT {limit}"
                 )
                 

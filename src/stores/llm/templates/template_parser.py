@@ -2,7 +2,7 @@ import os
 
 class TemplateParser:
     def __init__(self,language:str =None,default_language="en"):
-        self.current_path = os.path.dirname(os.path.abs(__file__))
+        self.current_path = os.path.dirname(os.path.abspath(__file__))
         self.default_language =default_language
         self.language= None
         self.set_language(language)
@@ -22,7 +22,7 @@ class TemplateParser:
         if not group or not key:
             return None
         
-        group_path = os.path.join(self.current_path,"locales",self.languagem,f"{group}.py")
+        group_path = os.path.join(self.current_path,"locales",self.language,f"{group}.py")
         targeted_language=self.language
         if not os.path.exists(group_path):
                     group_path = os.path.join(self.current_path,"locales",self.default_language,f"{group}.py")

@@ -1,5 +1,5 @@
 from .LLMEnums import LLMEnums
-from .providers import OpenAIProvider, CoHereProvider
+from .providers import OpenAIProvider, CoHereProvider, GeminiProvider, GroqProvider
 
 class LLMProviderFactory:
     def __init__(self,config:dict):
@@ -10,7 +10,7 @@ class LLMProviderFactory:
         if provider == LLMEnums.OPENAI.value:
             return OpenAIProvider(
                 api_key = self.config.OPENAI_API_KEY,
-                api_url = self.config.OPENAI_API_URL,
+                base_url = self.config.OPENAI_API_URL,
                 default_input_max_character=self.config.INPUT_DEFAULT_MAX_CHARACTER,
                 default_generation_max_output_tokens=self.config.GENERATION_DEFAULT_MAX_TOKENS,
                 default_generation_temperature=self.config.GENERATION_DEFAULT_MAX_TEMPERATURE
@@ -21,6 +21,22 @@ class LLMProviderFactory:
         if provider == LLMEnums.COHERE.value:
             return CoHereProvider(
                 api_key=self.config.COHERE_API_KEY,
+                default_input_max_character=self.config.INPUT_DEFAULT_MAX_CHARACTER,
+                default_generation_max_output_tokens=self.config.GENERATION_DEFAULT_MAX_TOKENS,
+                default_generation_temperature=self.config.GENERATION_DEFAULT_MAX_TEMPERATURE
+            )
+        
+        if provider == LLMEnums.GEMINI.value:
+            return GeminiProvider(
+                api_key=self.config.GEMINI_API_KEY,
+                default_input_max_character=self.config.INPUT_DEFAULT_MAX_CHARACTER,
+                default_generation_max_output_tokens=self.config.GENERATION_DEFAULT_MAX_TOKENS,
+                default_generation_temperature=self.config.GENERATION_DEFAULT_MAX_TEMPERATURE
+            )
+        
+        if provider == LLMEnums.GROQ.value:
+            return GroqProvider(
+                api_key=self.config.GROQ_API_KEY,
                 default_input_max_character=self.config.INPUT_DEFAULT_MAX_CHARACTER,
                 default_generation_max_output_tokens=self.config.GENERATION_DEFAULT_MAX_TOKENS,
                 default_generation_temperature=self.config.GENERATION_DEFAULT_MAX_TEMPERATURE

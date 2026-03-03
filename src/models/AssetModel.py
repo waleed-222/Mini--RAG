@@ -7,7 +7,7 @@ class AssetModel(BaseDataModel):
     
     def __init__(self,db_client:object):
         super().__init__(db_client=db_client)
-        self.collection= db_client
+        self.db_client= db_client
         
         
     @classmethod
@@ -28,7 +28,7 @@ class AssetModel(BaseDataModel):
         
        
     
-    async def get_all_project_asset(self,asset_project_id: str, asset_type:str):
+    async def get_all_project_assets(self,asset_project_id: str, asset_type:str):
         async with self.db_client() as session:
             stmt = select(Asset).where(
                 Asset.asset_project_id==asset_project_id,
@@ -46,5 +46,5 @@ class AssetModel(BaseDataModel):
                 Asset.asset_name==asset_name
             )
             result = await session.execute(stmt)
-            record = result.scalars().all()
+            record = result.scalar_one_or_none()
         return record

@@ -39,7 +39,7 @@ class CoHereProvider(LLMInterface):
         self.embedding_size=model_size
             
     def process_text(self,text:str):
-        return text[self.default_input_max_character].strip()
+        return text[:self.default_input_max_character].strip()
         
     def generate_text(self,prompt:str,chat_history:list ,max_output_token:int=None,temperature: float =None):
         if  not self.client:
@@ -55,7 +55,7 @@ class CoHereProvider(LLMInterface):
         temperature = temperature if temperature else self.default_generation_temperature
         
         # chat_history.append(
-        #     self.contruct_prompt(
+        #     self.construct_prompt(
                 
         #         prompt=prompt,
         #         role=CoHereEnums.USER.value()
@@ -75,7 +75,7 @@ class CoHereProvider(LLMInterface):
         return response.text
     
     
-    def embed_text(self,text:Union[str,List[str]],documented_type:str=None):
+    def embed_text(self,text:Union[str,List[str]],document_type:str=None):
         
         if  not self.client:
             self.logger.error("Cohere AI client was not set")
@@ -91,7 +91,7 @@ class CoHereProvider(LLMInterface):
         
         
         input_type = CoHereEnums.DOCUMENT
-        if documented_type == DocumentTypeEnum.QUERY:
+        if document_type == DocumentTypeEnum.QUERY.value:
             input_type = CoHereEnums.QUERY
             
         
@@ -111,7 +111,7 @@ class CoHereProvider(LLMInterface):
         return [ f for f in response.embeddings.float]
     
         
-    def contruct_prompt(self,prompt:str,role:str):
+    def construct_prompt(self,prompt:str,role:str):
         return {
             "role":role,
             "text":prompt

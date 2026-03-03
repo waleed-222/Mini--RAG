@@ -31,7 +31,10 @@ async def startup_span():
     app.generation_client.set_generation_model(settings.GENERATION_MODEL_ID)
     # Embedding Client
     app.embedding_client = llm_factory.create(settings.EMBEDDING_BACKEND)
-    app.embedding_client.set(model_id=settings.EMBEDDING_MODEL_ID,embedding_size=settings.EMBEDDING_MODE_SIZE)
+    app.embedding_client.set_embedding_model(
+    settings.EMBEDDING_MODEL_ID,
+    settings.EMBEDDING_MODEL_SIZE
+    )
     
     #vector db client
     app.vectordb_client = vectordb_provider_factory.create(

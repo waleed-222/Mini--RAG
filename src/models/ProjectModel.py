@@ -7,7 +7,7 @@ class ProjectModel(BaseDataModel):
     
     def __init__(self,db_client: object):
         super().__init__(db_client=db_client)
-        self.collection= db_client
+        self.db_client= db_client
         
     @classmethod
     async def create_instance(cls,db_client: object):
@@ -23,7 +23,7 @@ class ProjectModel(BaseDataModel):
             async with session.begin():
                 session.add(project)
             await session.commit()
-            await session.refresh()
+            await session.refresh(project)
         return project
 
     
@@ -33,12 +33,14 @@ class ProjectModel(BaseDataModel):
                 async with session.begin():
                     query=select(Project).where(Project.project_id==project_id)
                     result= await session.execute(query)
-                    project= result.select_one_or_none()
+                    project= result.scalar_one_or_none()
+                    print("project:",project)
                     if project is None:
                         project_rec= Project(
                             project_id = project_id
                         )
                         project = await self.create_project(project=project_rec)
+                        return project
                     else :
                         return project
         
@@ -53,12 +55,12 @@ class ProjectModel(BaseDataModel):
                             func.count(Project.project_id)
                         )
                     )
-                    total_documents=total_documents.scalar.one()
+                    total_documents=total_documents.scalar_one()
                     total_pages = total_documents//page_size
                     if total_documents % page_size >0:
                          total_pages+=1
                     query= select(Project).offset((page-1)*page_size).limit(page_size)
-                    projects = await session.exqute(query).scalar().all()
+                    projects = await session.execute(query).scalars().all()
                     
                     return projects,total_pages
         

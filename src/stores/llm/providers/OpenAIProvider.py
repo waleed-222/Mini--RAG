@@ -8,13 +8,13 @@ from ..LLMEnums import OpenAIEnums
 
 class OpenAIProvider(LLMInterface):
     
-    def __init__(self,api_key:str,api_url:str=None,
+    def __init__(self,api_key:str,base_url:str=None,
                  default_input_max_character: int=1000,
                  default_generation_max_output_tokens:int=1000,
                  default_generation_temperature:float=0.1
                 ):
         self.api_key=api_key
-        self.api_url =api_url
+        self.base_url =base_url
         
         self.default_input_max_character=default_input_max_character
         self.default_generation_max_output_tokens=default_generation_max_output_tokens
@@ -26,7 +26,7 @@ class OpenAIProvider(LLMInterface):
         
         self.client = OpenAI(
             api_key=self.api_key,
-            api_url=self.api_url if self.api_url and len(self.api_url) else None
+            base_url=self.base_url if self.base_url and len(self.base_url) else None
         )
         
         self.enums = OpenAIEnums
@@ -40,7 +40,7 @@ class OpenAIProvider(LLMInterface):
         self.embedding_size=model_size
         
     def process_text(self,text:str):
-        return text[self.default_input_max_character].strip()
+        return text[:self.default_input_max_character].strip()
         
     def generate_text(self,prompt:str,chat_history:list ,max_output_token:int=None,temperature: float =None):
         if  not self.client:
@@ -56,7 +56,7 @@ class OpenAIProvider(LLMInterface):
         temperature = temperature if temperature else self.default_generation_temperature
         
         chat_history.append(
-            self.contruct_prompt(
+            self.construct_prompt(
                 
                 prompt=prompt,
                 role=OpenAIEnums.USER.value()
@@ -70,7 +70,12 @@ class OpenAIProvider(LLMInterface):
             temperature=temperature
             )
         
-        if not response or  not response.coices or len(response.choices)==0 or not response.choices[0].message:
+        if (
+            not response
+            or not response.choices
+            or len(response.choices) == 0
+            or not response.choices[0].message
+        ):
             self.logger.error("Error while generation text with OpenAI")
             return None
         return response.choices[0].message.content
@@ -101,7 +106,7 @@ class OpenAIProvider(LLMInterface):
         return [ rec.embedding for rec in response.data]
         return response.data[0].embedding
         
-    def contruct_prompt(self,prompt:str,role:str):
+    def construct_prompt(self,prompt:str,role:str):
         return {
             "role":role,
             "content":prompt
