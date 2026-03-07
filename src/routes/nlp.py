@@ -8,6 +8,7 @@ from models.ProjectModel import ProjectModel
 from models.ChunkModel import ChunkModel
 from controllers import NLPController
 from models import ResponseSignal
+from tasks.data_indexing import index_data_content
 
 logger= logging.getLogger('uvicorn.error')
 
@@ -20,82 +21,16 @@ nlp_router = APIRouter(
 @nlp_router.post("/index/push/{project_id}")
 async def index_project(request:Request,project_id:int,push_request:PushRequest):
     
-    project_model= await ProjectModel.create_instance(
-        db_client=request.app.db_client
+    task = index_data_content.delay(
+        project_id=project_id,
+        do_reset = push_request.do_reset
         )
-    chunk_model = await ChunkModel.create_instance(
-        db_client=request.app.db_client
-        )
-    project = await  project_model.get_project_or_create_one(project_id=project_id)
-    
-    if not project:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={
-                "signal":ResponseSignal.PROJECT_NOT_FOUND_ERROR.value
-            }
-        )
-        
-    nlp_controller=NLPController(
-        vectordb_client=request.app.vectordb_client,
-        generation_client=request.app.generation_client,
-        embedding_client=request.app.embedding_client,
-        template_parser=request.app.template_parser
+    return JSONResponse(
+        content={
+            "signal":ResponseSignal.DATA_PUSH_TASK_READY.value,
+            "task_id":task.id
+        }
     )
-    
-    has_records = True
-    page_no= 1
-    insert_items_count=0
-    idx = 0
-    
-    #create collection if not exists
-    collection_name = nlp_controller.create_collection_name(project_id=project.project_id)
-    _=await request.app.vectordb_client.create_collection(
-        collection_name=collection_name,
-        embedding_size=request.app.embedding_client.embedding_size,
-        do_reset = push_request.do_reset,
-    )
-    exists = await request.app.vectordb_client.is_collection_existed(collection_name)
-    print(f"Collection {collection_name} exists? {exists}")
-    # setup batching
-    total_chunks_count= await chunk_model.get_total_chunks_count(project_id=project.project_id)
-    pbar = tqdm(total=total_chunks_count,desc="Vector Indexing", position=0,)
-    
-    while has_records:
-        page_chunks= await chunk_model.get_project_chunks(project_id=project.project_id,page_no=page_no)
-        print(f"Processing page {page_no} with {len(page_chunks)} chunks")
-        if len(page_chunks):
-            page_no+=1
-        
-        if not page_chunks or len(page_chunks) ==0:
-            has_records = False
-            break
-        
-        chunks_ids= [c.chunk_id for c in page_chunks]
-        idx +=len(page_chunks)
-        
-        is_inserted= await nlp_controller.index_into_vector_db(
-            project=project,
-            chunks=page_chunks,
-            chunks_ids=chunks_ids
-        )
-        
-        if not is_inserted:
-            return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={
-                "signal":ResponseSignal.INSERT_INTO_VECTORDB_ERROR.value
-            }
-            )
-            
-        pbar.update(len(page_chunks))
-        insert_items_count+=len(page_chunks)
-    return  JSONResponse(
-            content={
-                "signal":ResponseSignal.INSERT_INTO_VECTORDB_SUCCESS.value,
-                "inserted_items_count":insert_items_count
-            }
-            )
     
 @nlp_router.get("/index/info/{project_id}")
 async def get_project_index_info(request:Request,project_id:int):
@@ -214,8 +149,8 @@ async def answer_index(request:Request,project_id:int,search_request:SearchReque
             content={
                 "signal":ResponseSignal.RAG_ANSWER_SUCCESS.value,
                 "answer":answer,
-                # "full_prompt":full_prompt,
-                # "chat_history":chat_history
+                "full_prompt":full_prompt,
+                "chat_history":chat_history
             }
             )
         

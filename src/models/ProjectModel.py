@@ -34,7 +34,6 @@ class ProjectModel(BaseDataModel):
                     query=select(Project).where(Project.project_id==project_id)
                     result= await session.execute(query)
                     project= result.scalar_one_or_none()
-                    print("project:",project)
                     if project is None:
                         project_rec= Project(
                             project_id = project_id
@@ -55,12 +54,12 @@ class ProjectModel(BaseDataModel):
                             func.count(Project.project_id)
                         )
                     )
-                    total_documents=total_documents.scalar_one()
+                    total_documents=total_documents.scalar.one()
                     total_pages = total_documents//page_size
                     if total_documents % page_size >0:
                          total_pages+=1
                     query= select(Project).offset((page-1)*page_size).limit(page_size)
-                    projects = await session.execute(query).scalars().all()
+                    projects = await session.execute(query).scalar().all()
                     
                     return projects,total_pages
         

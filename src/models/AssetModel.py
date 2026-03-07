@@ -28,7 +28,7 @@ class AssetModel(BaseDataModel):
         
        
     
-    async def get_all_project_assets(self,asset_project_id: str, asset_type:str):
+    async def get_all_project_asset(self,asset_project_id: str, asset_type:str):
         async with self.db_client() as session:
             stmt = select(Asset).where(
                 Asset.asset_project_id==asset_project_id,

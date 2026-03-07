@@ -7,7 +7,11 @@ from stores.llm.templates.template_parser import TemplateParser
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
+from utils.metrics import setup_metrics
+
 app = FastAPI()
+
+setup_metrics(app)
 
 @app.on_event("startup")
 async def startup_span():
@@ -21,20 +25,17 @@ async def startup_span():
     )
 
     
-    llm_factory = LLMProviderFactory(settings)
+    llm_provider_factory = LLMProviderFactory(settings)
     
     vectordb_provider_factory= VectorDBProviderFactory(config=settings,db_client=app.db_client)
     
     
     # Generate Client
-    app.generation_client = llm_factory.create(settings.GENERATION_BACKEND)
+    app.generation_client = llm_provider_factory.create(settings.GENERATION_BACKEND)
     app.generation_client.set_generation_model(settings.GENERATION_MODEL_ID)
     # Embedding Client
-    app.embedding_client = llm_factory.create(settings.EMBEDDING_BACKEND)
-    app.embedding_client.set_embedding_model(
-    settings.EMBEDDING_MODEL_ID,
-    settings.EMBEDDING_MODEL_SIZE
-    )
+    app.embedding_client = llm_provider_factory.create(settings.EMBEDDING_BACKEND)
+    app.embedding_client.set_embedding_model(model_id=settings.EMBEDDING_MODEL_ID,model_size=settings.EMBEDDING_MODEL_SIZE)
     
     #vector db client
     app.vectordb_client = vectordb_provider_factory.create(

@@ -33,7 +33,6 @@ class NLPController(BaseController):
         collection_name=self.create_collection_name(project.project_id)
 
         
-        
         # step2 : manage items
         texts = [c.chunk_text for c in chunks]
         metadata =[c.chunk_metadata for  c in chunks]
@@ -55,7 +54,7 @@ class NLPController(BaseController):
              texts = texts,
              record_ids=chunks_ids,
              metadata = metadata,
-             vectors = vectors,
+             vectors = vectors
          )
         
         return True

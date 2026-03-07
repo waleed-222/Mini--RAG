@@ -1,10 +1,11 @@
-fastapi==0.129.0
+fastapi==0.133.1
 uvicorn==0.41.0
 python-multipart==0.0.22
 python-dotenv==1.2.1
 pydantic-settings==2.12.0
 aiofiles==25.1.0 
 langchain==1.2.10
+langchain-community==0.4.1
 PyMuPDF==1.27.1
 motor==3.7.1
 openai==2.21.0
@@ -16,7 +17,23 @@ alembic==1.18.4
 psycopg2==2.9.11
 pgvector==0.4.2
 nltk==3.9.2
+google-genai==1.65.0
 google-generativeai==0.8.6
 groq==1.0.0
+# Monitoring and metrics
+prometheus-client==0.24.1
+starlette-exporter==0.22.0
+
+# Health checks
+fastapi-health==0.4.0
+
+# Task Queue aand Background Processing
+celery==5.6.2
+redis==7.2.1
+kombu==5.6.2
+billiard==4.2.4
+vine==5.1.0
+flower==2.0.1
+
 
 

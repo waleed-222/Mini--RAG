@@ -115,7 +115,7 @@ class PGVectorProvider(VectorDBInterface):
         if do_reset:
             _=await self.delete_collection(collection_name=collection_name)
             
-        is_collection_existed = await self.is_collection_existed(collection_name=collection_name)
+        is_collection_existed = await self.is_collection_existed(collection_name)
         
         if not is_collection_existed:
             self.logger.info(f"Creating collection: {collection_name}")
@@ -255,7 +255,7 @@ class PGVectorProvider(VectorDBInterface):
                                 'chunk_id':_record_id
                                 
                             }
-                        )   
+                        )
                     batch_insert_sql = sql_text(
                         f"INSERT INTO {collection_name}"
                     f"({PgVectorTableSchemeEnums.TEXT.value},"
@@ -281,7 +281,7 @@ class PGVectorProvider(VectorDBInterface):
         
         
         
-        vector = "[" + ",".join([str(v) for v in vector])+"]"
+        vector = "["+",".join([str(v) for v in vector])+"]"
         
         async with self.db_client() as session:
             async with session.begin():
@@ -290,7 +290,7 @@ class PGVectorProvider(VectorDBInterface):
                     f"1- ({PgVectorTableSchemeEnums.VECTOR.value} <=> :vector) as score "
                     f"FROM {collection_name} "
                     f"ORDER BY score DESC "
-                    f"LIMIT {limit}"
+                    f"LIMIT {limit} "
                 )
                 
                 result = await session.execute(search_sql,{"vector":vector})

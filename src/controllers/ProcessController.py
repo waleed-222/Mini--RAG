@@ -73,11 +73,11 @@ class ProcessController(BaseController):
         
         return chunks
     def process_simpler_splitter(self, texts:List[str], metadatas: List[dict], chunk_size: int, splitter_tag: str="\n"):
-        full_text= " ".join(texts)
+        full_text= "".join(texts)
         
         
         #split by "\n"
-        lines = [doc.strip() for doc in full_text.split(splitter_tag) if len(doc.strip()) > 1]
+        lines = [doc.strip() for doc in full_text.split(splitter_tag) if len(doc.strip())>1]
         
         chunks=[]
         current_chunk=""
